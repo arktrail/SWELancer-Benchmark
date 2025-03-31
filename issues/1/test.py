@@ -1,35 +1,38 @@
-import imaplib
 import email
+import imaplib
 import re
 from email.header import decode_header
-from playwright.sync_api import sync_playwright, expect
 
-<<<<<<< HEAD:issues/50163_1076/test.py
+from playwright.sync_api import expect, sync_playwright
 
 GMAIL_NAME = "nomandevtur+50163"
 GMAIL_APP_PASSWORD = ""
-=======
-# Enter Gmail credentials for a disposable
-GMAIL_NAME = "nomandevtur+55827.2"
-GMAIL_APP_PASSWORD = "tpye xlsj axyq nltq"
->>>>>>> main:issues/1/test.py
 
 
-def get_test_user_info(seed = None, first_name = None, last_name = None):
+def get_test_user_info(seed=None, first_name=None, last_name=None):
     if first_name is None:
         first_name = GMAIL_NAME
 
     if last_name is None:
         last_name = ""
 
-    email = f"{GMAIL_NAME}+{seed}@gmail.com" if seed is not None else f"{GMAIL_NAME}@gmail.com"
-    
-    return {"email": email, "password": GMAIL_APP_PASSWORD, "first_name": first_name, "last_name": last_name}
+    email = (
+        f"{GMAIL_NAME}+{seed}@gmail.com"
+        if seed is not None
+        else f"{GMAIL_NAME}@gmail.com"
+    )
+
+    return {
+        "email": email,
+        "password": GMAIL_APP_PASSWORD,
+        "first_name": first_name,
+        "last_name": last_name,
+    }
+
 
 def delete_email_inbox(user_email, password, retries=5, delay=10):
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
     imap.login(user_email, password)
-
 
     # Select inbox and delete all emails
     imap.select("inbox")
@@ -47,7 +50,9 @@ def get_magic_code(user_email, password, retries=5, delay=5):
 
     for _ in range(retries):
         imap.select("inbox")
-        status, messages = imap.search(None, '(UNSEEN SUBJECT "Expensify magic sign-in code:")')
+        status, messages = imap.search(
+            None, '(UNSEEN SUBJECT "Expensify magic sign-in code:")'
+        )
 
         if status == "OK":
             email_ids = messages[0].split()
@@ -65,7 +70,9 @@ def get_magic_code(user_email, password, retries=5, delay=5):
                             subject = subject.decode(encoding or "utf-8")
 
                         # Search for the magic code in the subject
-                        match = re.search(r"Expensify magic sign-in code: (\d+)", subject)
+                        match = re.search(
+                            r"Expensify magic sign-in code: (\d+)", subject
+                        )
                         if match:
                             code = match.group(1)
                             imap.logout()
@@ -75,8 +82,6 @@ def get_magic_code(user_email, password, retries=5, delay=5):
         else:
             print("Failed to retrieve emails. Retrying...")
 
-    
-
     imap.logout()
     print("Max retries reached. Email not found.")
     return None
@@ -84,7 +89,7 @@ def get_magic_code(user_email, password, retries=5, delay=5):
 
 def select_activity(page, first_name, last_name, activity_text):
     expect(page.get_by_text("What do you want to do today?")).to_be_visible()
-    
+
     # Select activity in onboarding page and click Continue
     page.get_by_label(activity_text).click()
 
@@ -98,8 +103,8 @@ def login_user(page, user_info, activity_text="Track and budget expenses"):
     # Clear cookies, local storage, and session storage
     page.context.clear_cookies()
 
-    page.goto('https://dev.new.expensify.com:8082/')
-    page.wait_for_load_state('load')
+    page.goto("https://dev.new.expensify.com:8082/")
+    page.wait_for_load_state("load")
 
     page.get_by_test_id("username").fill(user_info["email"])
     page.get_by_role("button", name="Continue").click()
@@ -109,7 +114,7 @@ def login_user(page, user_info, activity_text="Track and budget expenses"):
     expect(join_button.or_(validate_code_input)).to_be_visible()
 
     page.wait_for_timeout(5000)
-    if (join_button.is_visible()):
+    if join_button.is_visible():
         join_button.click(timeout=3000)
     else:
         # magic_code = get_magic_code(user_info["email"], user_info["password"], retries=6, delay=5)
@@ -126,18 +131,22 @@ def login_user(page, user_info, activity_text="Track and budget expenses"):
 
     select_activity_dialog = page.get_by_text("What do you want to do today?")
     if select_activity_dialog.count() > 0:
-        select_activity(page, user_info["first_name"], user_info["last_name"], activity_text)
+        select_activity(
+            page, user_info["first_name"], user_info["last_name"], activity_text
+        )
 
 
 def launch_app(pw, headless=False, device=None, geolocation=None):
-    browser = pw.chromium.launch(headless = headless, 
-                                proxy = {"server": "http://127.0.0.1:8080/"}, slow_mo = 1000,
-                                args=[
-                                    "--ignore-certificate-errors",
-                                    "--disable-web-security", 
-                                    "--disable-features=IsolateOrigins,site-per-process"
-                                    ]
-                            )
+    browser = pw.chromium.launch(
+        headless=headless,
+        proxy={"server": "http://127.0.0.1:8080/"},
+        slow_mo=1000,
+        args=[
+            "--ignore-certificate-errors",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+        ],
+    )
 
     context_args = {"viewport": {"width": 1024, "height": 640}}
     if device:
@@ -149,13 +158,15 @@ def launch_app(pw, headless=False, device=None, geolocation=None):
     page = context.new_page()
     return browser, context, page
 
-    
+
 def test_55827():
     with sync_playwright() as p:
-        
+
         user_info = get_test_user_info()
 
-        delete_email_inbox(user_info["email"], user_info["password"], retries=6, delay=5)
+        delete_email_inbox(
+            user_info["email"], user_info["password"], retries=6, delay=5
+        )
 
         browser, context, page = launch_app(p)
         login_user(page, user_info)
