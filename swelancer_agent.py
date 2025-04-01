@@ -81,8 +81,7 @@ async def get_model_response(messages: list[dict[str, Any]]) -> str:
     messages = trim_messages(messages, 110000)
 
     chat_completion = await client.chat.completions.create(
-        messages=messages,  # type: ignore
-        model="gpt-4o",
+        messages=messages, model="gpt-4o", max_tokens=16384  # type: ignore
     )
     return chat_completion.choices[0].message.content  # type: ignore
 
@@ -133,39 +132,26 @@ It has already been cloned, and is present in /app/expensify (your CWD).
 You have been tasked with fixing the following issue:
 {issue title}
 {full HTML documentation of issue, including how to reproduce the bug, the actual vs. expected behavior, and which platforms are affected}
+
 The reward for the correct fix is ${price}.
-You do not need to push your changes to the repository, we will deal
-with this for you.
-Do not attempt to run the app; simply make your changes and then end your
-turn.
+
+You do not need to push your changes to the repository, we will deal with this for you.
+Do not attempt to run the app; simply make your changes and then end your turn.
 Do not end your turn until you have submitted your code changes.
 You absolutely must not leave action items / TODOs.
 ---
-You will be provided with a user tool, which you can call by running
-"bash -i -c ’user-tool’" in the command line, which has a user open the app
-with your local changes and perform the actions specified in the bug report.
+You will be provided with a user tool, which you can call by running "bash -i -c ’user-tool’" in the command line, which has a user open the app with your local changes and perform the actions specified in the bug report.
 It could take up to a minute for the user to finish using the app.
-When you call the user tool, when the user finishes
-/app/expensify/user_tool/
-will be populated with folders called output_browser1 ... n for as many
-browsers as were used by the user during their test.
-Inside each folder, you will find a file called trace.trace,
-which contains the trajectory the user took. Here are a few things to note:
+When you call the user tool, when the user finishes /app/expensify/user_tool/ will be populated with folders called output_browser1 ... n for as many browsers as were used by the user during their test.
+
+Inside each folder, you will find a file called trace.trace, which contains the trajectory the user took. Here are a few things to note:
 - You will need to parse this file programmatically in order to open it.
-- If a row has "type":"screencast-frame", then the "sha1" property
-will correspond to a .jpeg file in the resources folder,
-which is a screenshot of the browser at that time.
-- If you want to view the page as HTML, rather than a JPEG,
-you can look for rows that are called "type":"frame-snapshot";
-you can print them out to see the HTML at this point in time.
-- You should review the rows with type "type" set to "log", "before", or
-"after" as they are important and show what actions are being taken.
-- All of the rows are in order, so e.g. you can find an interesting log row
-and then look at the next row that is a frame-snapshot to see the HTML.
-You should use this to help you iteratively debug and fix the issue.
-You can call it as often as you need to.
-When you call the user tool, you wait 90,000 milliseconds
-(e.g. by setting the timeout argument to 90000)!
+- If a row has "type":"screencast-frame", then the "sha1" property will correspond to a .jpeg file in the resources folder, which is a screenshot of the browser at that time.
+- If you want to view the page as HTML, rather than a JPEG, you can look for rows that are called "type":"frame-snapshot"; you can print them out to see the HTML at this point in time.
+- You should review the rows with type "type" set to "log", "before", or "after" as they are important and show what actions are being taken.
+- All of the rows are in order, so e.g. you can find an interesting log row and then look at the next row that is a frame-snapshot to see the HTML.
+
+You should use this to help you iteratively debug and fix the issue. You can call it as often as you need to. When you call the user tool, you wait 90,000 milliseconds (e.g. by setting the timeout argument to 90000)!
 """,
                     }
                 )
